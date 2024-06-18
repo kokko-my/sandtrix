@@ -8,7 +8,7 @@ C言語で作成した砂テトリスゲームです。SDL2ライブラリを使
 - しかし、ブロックは着地と同時に砂へと崩壊します。
 - うまく操作してスコアを稼ぎましょう。
 
-![砂テトリスプレイ動画](./assets/gameplay.gif)
+![gameplay](https://github.com/kokko-my/sandtrix/assets/172095502/9b7a68fb-8fb5-467b-bbe1-aee84049029f)
 
 ## ビルド方法
 ### 必要環境
