@@ -43,8 +43,9 @@
 /*-----structures-----*/
 
 /* カラー */
-enum {
+typedef enum {
     Black,
+    White,
     Red1,
     Red2,
     Yellow1,
@@ -54,7 +55,7 @@ enum {
     Blue1,
     Blue2,
     MAX_N_COLOR
-};
+} Color;
 /* ゲームの状態 */
 typedef enum {
     GS_End,
@@ -91,7 +92,7 @@ typedef struct {
     SDL_Renderer *renderer;
     int lines;
     int score;
-    int screen[SCN_HEI_NSAND + 1][SCN_WID_NSAND];        //      砂用スクリーン
+    Color screen[SCN_HEI_NSAND + 1][SCN_WID_NSAND];        //      砂用スクリーン
 } GameInfo;
 
 
@@ -109,6 +110,7 @@ extern SDL_Color colors[MAX_N_COLOR];
 extern void InitSystem(void);
 extern void TerminateSystem(void);
 extern void GameLogic(void);
+extern int  MatchSimilarColor(int);
 /* window.c */
 extern void InitWindow(void);
 extern void TerminateWindow(void);

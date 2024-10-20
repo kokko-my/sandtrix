@@ -161,15 +161,17 @@ static void DrawSands(void) {
 static void DrawMinoBlock(int x, int y, int _c) {
     if ( _c == Black )   return;
 
-    _c -= (_c % 2 == 0) ? 1 : 0;
-    int c = _c;
-
+    int c = MatchSimilarColor(_c);
     for ( int n = 0; n < BLOCK_NSAND/2; n++, x += SAND_SIZE, y += SAND_SIZE ) {
         SDL_Color cl = colors[c];
         SDL_Rect d = {x, y, SAND_SIZE*(8-n*2), SAND_SIZE*(8-n*2)};
         SDL_SetRenderDrawColor(game.renderer, cl.r, cl.g, cl.b, cl.a);
         SDL_RenderFillRect(game.renderer, &d);
-        c += (n % 2 == 0) ? 1 : -1;
+        if (c == MatchSimilarColor(_c)) {
+            c++;
+        } else {
+            c--;
+        }
     }
 }
 
