@@ -265,10 +265,8 @@ static void DrawStrings(void) {
     SDL_RenderCopy(game.renderer, game_sheet, &src, &dst);      //  'SCORE'
     src = (SDL_Rect){0, 16*11, 16*19, 16*8};
     dst = (SDL_Rect){452, 522, 16*12, 16*5};
-    SDL_RenderCopy(game.renderer, game_sheet, &src, &dst);      //  'CATACLYSM:'
     DrawNumber(game.lines, 474, 314);
     DrawNumber(game.score, 474, 444);
-    DrawNumber(game.ct_remain, 442, 558);
 }
 
 

@@ -38,8 +38,6 @@
 #define MINO_SIZE       4
 /* デッドエンド */
 #define DEAD_ENDLINE    128
-/* 天変地異の時間間隔[s] */
-#define INVERT_INTERVAL 30   //  いったん間隔短めにする
 
 
 /*-----structures-----*/
@@ -93,7 +91,6 @@ typedef struct {
     SDL_Renderer *renderer;
     int lines;
     int score;
-    int ct_remain;
     int screen[SCN_HEI_NSAND + 1][SCN_WID_NSAND];        //      砂用スクリーン
 } GameInfo;
 

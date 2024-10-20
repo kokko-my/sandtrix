@@ -36,7 +36,6 @@ static int  CheckSandComplete(int, int, int);
 static Uint32 FallMino(Uint32, void*);
 static Uint32 CollapseMino(Uint32, void*);
 static void ShuffleIntArray(int[], int);
-static void ReverseRows(int r, int c, int, int[r][c]);
 
 
 /*-----初期化処理-----*/
@@ -142,15 +141,6 @@ void GameLogic(void) {
             game.lines++;
         }
     }
-
-    /* 天変地異 */
-    time_t time_now = time(NULL);
-    int diff = difftime(time_now, time_prev);
-    if ( diff > INVERT_INTERVAL ) {
-        ReverseRows(SCN_HEI_NSAND, SCN_WID_NSAND, DEAD_ENDLINE/SAND_SIZE, game.screen);
-        time_prev = time_now;
-    }
-    game.ct_remain = INVERT_INTERVAL - diff;
 }
 
 /**
@@ -539,21 +529,6 @@ static void ShuffleIntArray(int array[], int n) {
         int tmp = array[r1];
         array[r1] = array[r2];
         array[r2] = tmp;
-    }
-}
-
-/**
- * 行列を行について反転する
- *  引数: 行数, 列数, オフセット, 行列へのダブルポインタ
- *  返値: なし
- */
-static void ReverseRows(int rows, int cols, int offset, int array[rows][cols]) {
-    for ( int r = 0; r < rows / 2; r++ ) {
-        for ( int c = 0; c < cols; c++ ) {
-            int t = array[r+offset][c];
-            array[r+offset][c] = array[rows-r-1][c];
-            array[rows-r-1][c] = t;
-        }
     }
 }
 
