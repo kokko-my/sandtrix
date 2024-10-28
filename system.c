@@ -32,11 +32,10 @@ static void RotateMino(int);
 static int  IntersectMino(void);
 static void ReflectScreen(void);
 static void RemoveCompleteSand(int, int, int);
-static int  CheckSandComplete(int, int, int);
+static int  CheckSandComplete(int, int, Color);
 static Uint32 FallMino(Uint32, void*);
 static Uint32 CollapseMino(Uint32, void*);
 static void ShuffleIntArray(int[], int);
-static void ReverseRows(int r, int c, int, int[r][c]);
 
 
 /*-----初期化処理-----*/
@@ -132,25 +131,17 @@ void GameLogic(void) {
 
     /* 砂がそろっているかチェック */
     for ( int i = SCN_HEI_NSAND-1; i >= 0; i-- ) {
-        int c = game.screen[i][0];
+        Color c = MatchSimilarColor(game.screen[i][0]);
         if ( c == Black ) {
             continue;
         }
         if ( CheckSandComplete(0, i, c) ) {
+            DestructAnimation(0, i, c);
             RemoveCompleteSand(0, i, c);
             game.score += 1000;
             game.lines++;
         }
     }
-
-    /* 天変地異 */
-    time_t time_now = time(NULL);
-    int diff = difftime(time_now, time_prev);
-    if ( diff > INVERT_INTERVAL ) {
-        ReverseRows(SCN_HEI_NSAND, SCN_WID_NSAND, DEAD_ENDLINE/SAND_SIZE, game.screen);
-        time_prev = time_now;
-    }
-    game.ct_remain = INVERT_INTERVAL - diff;
 }
 
 /**
@@ -165,6 +156,7 @@ static int InputEvent(void) {
     SDL_Event ev;
     if ( SDL_PollEvent(&ev) ) {
 
+        MINO lastmino = mino;
         if ( ev.type == SDL_KEYDOWN ) {
             switch ( ev.key.keysym.sym ) {
             case SDLK_ESCAPE:
@@ -172,9 +164,15 @@ static int InputEvent(void) {
                 break;
             case SDLK_c:
                 RotateMino(0);
+                if (IntersectMino()) {
+                    mino = lastmino;
+                }
                 break;
             case SDLK_UP:
                 RotateMino(1);
+                if (IntersectMino()) {
+                    mino = lastmino;
+                }
                 break;
             case SDLK_DOWN:
                 input.down = 1;
@@ -253,9 +251,8 @@ static MINO MakeMino(void) {
     int m_color;
     do {
         m_color = rand() % MAX_N_COLOR;
-    } while ( m_color == Black );
-    m_color -= (m_color % 2 == 0) ? 1 : 0;
-    new_mino.color = m_color;
+    } while ( m_color == Black || m_color == White);
+    new_mino.color = MatchSimilarColor(m_color);
 
     return new_mino;
 }
@@ -376,7 +373,7 @@ static void ReflectScreen(void) {
 
             int x = (mino.x + bx * BLOCK_SIZE) / SAND_SIZE;
             int y = (mino.y + by * BLOCK_SIZE) / SAND_SIZE;
-            int c = (mino.color % 2 == 0) ? mino.color-1 : mino.color;
+            int c = MatchSimilarColor(mino.color);
 
             for ( int n = 0; n < BLOCK_NSAND/2; n++ ) {
                 for ( sy = 0; sy < 8-2*n; sy++ ) {
@@ -384,7 +381,12 @@ static void ReflectScreen(void) {
                         game.screen[y+sy+n][x+sx+n] = c;
                     }
                 }
-                c += (n % 2 == 0) ? 1 : -1;
+                //  色を切り替え
+                if (c == MatchSimilarColor(mino.color)) {
+                    c++;
+                } else {
+                    c--;
+                }
             }
         }
     }
@@ -407,12 +409,10 @@ static void RemoveCompleteSand(int _x, int _y, int c) {
             continue;
         }
 
-        c -= c % 2 ? 0 : 1;
-        if ( game.screen[y][x] == c || game.screen[y][x] - 1 == c ) {
+        c = MatchSimilarColor(c);
+        if ( c == MatchSimilarColor(game.screen[y][x]) ) {
             game.screen[y][x] = Black;
-            if ( game.screen[y][x] != c && game.screen[y][x] - 1 != c ) {
-                RemoveCompleteSand(x, y, c);
-            }
+            RemoveCompleteSand(x, y, c);
         }
     }
 }
@@ -425,24 +425,20 @@ static void RemoveCompleteSand(int _x, int _y, int c) {
  * 引数：座標, 調査する色
  * 返値：1...つながっている, 0...つながっていない
 */
-static int CheckSandComplete(int x, int y, int c) {
+static int CheckSandComplete(int x, int y, Color c) {
 
     int ret = 0;
-    int dv = 0;                     //      進行方向（スクリーン右向き）
+    int dv = 0;                     //      進行方向（0:スクリーン右 1:上 2:左 3:下）
     int lv = (dv + 1) % 4;          //      進行方向に対する左方向
-    c -= (c % 2 == 0) ? 1 : 0;      //      似た色は統一
 
     /* 進行方向左に別の色があるように進む */
     while ( 1 ) {
-        int cl_l = game.screen[y + dy[lv]][x + dx[lv]];
-        int cl_d = game.screen[y + dy[dv]][x + dx[dv]];
-        cl_l -= (cl_l % 2 == 0) ? 1 : 0;
-        cl_d -= (cl_d % 2 == 0) ? 1 : 0;
-        if ( c != cl_l && c != cl_l + 1 ) {
-            if ( c != cl_d && c != cl_d + 1 ) {
-                if ( x == 0 ) {
-                    break;
-                }
+        Color cl_l = game.screen[y + dy[lv]][x + dx[lv]];
+        Color cl_d = game.screen[y + dy[dv]][x + dx[dv]];
+        cl_l = MatchSimilarColor(cl_l);
+        cl_d = MatchSimilarColor(cl_d);
+        if ( c != cl_l ) {
+            if ( c != cl_d ) {
                 dv = (dv + 3) % 4;
                 lv = (dv + 1) % 4;
                 continue;
@@ -543,17 +539,26 @@ static void ShuffleIntArray(int array[], int n) {
 }
 
 /**
- * 行列を行について反転する
- *  引数: 行数, 列数, オフセット, 行列へのダブルポインタ
- *  返値: なし
+ *  似ている色を統一する
+ *  引数: カラー
+ *  返値: 統一後のカラー
  */
-static void ReverseRows(int rows, int cols, int offset, int array[rows][cols]) {
-    for ( int r = 0; r < rows / 2; r++ ) {
-        for ( int c = 0; c < cols; c++ ) {
-            int t = array[r+offset][c];
-            array[r+offset][c] = array[rows-r-1][c];
-            array[rows-r-1][c] = t;
-        }
+int MatchSimilarColor(int c) {
+    switch (c) {
+    case Red1:
+    case Red2:
+        return Red1;
+    case Yellow1:
+    case Yellow2:
+        return Yellow1;
+    case Green1:
+    case Green2:
+        return Green1;
+    case Blue1:
+    case Blue2:
+        return Blue1;
+    default:
+        return c;
     }
 }
 

@@ -9,10 +9,12 @@
 
 #define IMAGE_PATH  "Images/game_sheet.png"
 #define MUSIC_PATH  "Musics/UrbanBGM_01.mp3"
+#define CHUNK_PATH  "Musics/Clear2.mp3"
 
 /* global values */
 static SDL_Texture *game_sheet;
 static Mix_Music   *game_bgm;
+static Mix_Chunk   *game_chn;
 static SDL_Rect     src, dst;
 
 /* static functions */
@@ -55,6 +57,7 @@ void InitWindow(void) {
         goto DESTROY;
     }
     game_bgm = Mix_LoadMUS(MUSIC_PATH);
+    game_chn = Mix_LoadWAV(CHUNK_PATH);
     Mix_PlayMusic(game_bgm, -1);
 
     SDL_RenderPresent(game.renderer);
@@ -117,9 +120,6 @@ static void DrawWindow(void) {
     SDL_SetRenderDrawColor(game.renderer, 0, 0, 0, 255);
     SDL_RenderFillRect(game.renderer, &SCREEN_RECT);
 
-    SDL_SetRenderDrawColor(game.renderer, 100, 100, 100, 50);          //      デッドエンド
-    SDL_RenderDrawLine(game.renderer, SCREEN_X, DEAD_ENDLINE, SCREEN_X + SCREEN_W, DEAD_ENDLINE);
-
     dst = NEXT_MINO_RECT;                                           //      ネクスト欄
     dst.x -= 4;
     dst.y -= 4;
@@ -142,9 +142,6 @@ static void DrawSands(void) {
     for ( int y = 0; y < SCN_HEI_NSAND; y++ ) {
         dst.y = SCREEN_Y + y * SAND_SIZE;
         for ( int x = 0; x < SCN_WID_NSAND; x++ ) {
-            if ( game.screen[y][x] == Blank ) {
-                continue;
-            }
             dst.x = SCREEN_X + x * SAND_SIZE;
             SDL_Color cl = colors[game.screen[y][x]];
             SDL_SetRenderDrawColor(game.renderer, cl.r, cl.g, cl.b, cl.a);
@@ -161,15 +158,17 @@ static void DrawSands(void) {
 static void DrawMinoBlock(int x, int y, int _c) {
     if ( _c == Black )   return;
 
-    _c -= (_c % 2 == 0) ? 1 : 0;
-    int c = _c;
-
+    int c = MatchSimilarColor(_c);
     for ( int n = 0; n < BLOCK_NSAND/2; n++, x += SAND_SIZE, y += SAND_SIZE ) {
         SDL_Color cl = colors[c];
         SDL_Rect d = {x, y, SAND_SIZE*(8-n*2), SAND_SIZE*(8-n*2)};
         SDL_SetRenderDrawColor(game.renderer, cl.r, cl.g, cl.b, cl.a);
         SDL_RenderFillRect(game.renderer, &d);
-        c += (n % 2 == 0) ? 1 : -1;
+        if (c == MatchSimilarColor(_c)) {
+            c++;
+        } else {
+            c--;
+        }
     }
 }
 
@@ -265,11 +264,64 @@ static void DrawStrings(void) {
     SDL_RenderCopy(game.renderer, game_sheet, &src, &dst);      //  'SCORE'
     src = (SDL_Rect){0, 16*11, 16*19, 16*8};
     dst = (SDL_Rect){452, 522, 16*12, 16*5};
-    SDL_RenderCopy(game.renderer, game_sheet, &src, &dst);      //  'CATACLYSM:'
     DrawNumber(game.lines, 474, 314);
     DrawNumber(game.score, 474, 444);
-    DrawNumber(game.ct_remain, 442, 558);
 }
 
+/*-----アニメーション関数-----*/
+
+/**
+ * 砂の領域を指定色に塗る
+ * 引数：マスの座標, 砂の色, 塗りつぶす色
+ * 返値：なし
+ */
+static void FillCompleteSand(int _x, int _y, int c, int fc) {
+    if (c == Blank)
+        return;
+    int dy[] = { 0, -1, 0, 1, 1, -1, -1, 1 };
+    int dx[] = { 1, 0, -1, 0, 1, 1, -1, -1 };
+    for (int n = 0; n < 8; n++) {
+        int x = _x + dx[n];
+        int y = _y + dy[n];
+        if (x < 0 || x >= SCN_WID_NSAND || y < 0 || y >= SCN_HEI_NSAND) {
+            continue;
+        }
+
+        c = MatchSimilarColor(c);
+        if (c == MatchSimilarColor(game.screen[y][x])) {
+            game.screen[y][x] = fc;
+            FillCompleteSand(x, y, c, fc);
+        }
+    }
+}
+
+/**
+ *  消滅する砂のアニメーション
+ *  引数: 座標, 色
+ *  返値: なし
+ */
+void DestructAnimation(int x, int y, Color c) {
+    FillCompleteSand(x, y, c, White);
+    SDL_Delay(100);
+    Mix_PlayChannel(-1, game_chn, 0);
+    for (int x = 0; x < SCN_WID_NSAND; x++) {
+        for (int y = 0; y < SCN_HEI_NSAND; y++) {
+            if (game.screen[y][x] == White) {
+                game.screen[y][x] = Black;
+            }
+        }
+        DrawSands();
+        DrawMino();
+        SDL_RenderPresent(game.renderer);
+        SDL_Delay(15);
+
+        //  なぜか白い砂がわずかに残るのでもう一度消す
+        for (int y = 0; y < SCN_HEI_NSAND; y++) {
+            if (game.screen[y][x] == White) {
+                game.screen[y][x] = Black;
+            }
+        }
+    }
+}
 
 /* end of window.c */

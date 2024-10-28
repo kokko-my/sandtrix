@@ -41,6 +41,7 @@ C言語で作成した砂テトリスゲームです。SDL2ライブラリを使
 ### 使用音源
 
 - BGM: 都会的なBGM1 by スプリンギン（https://www.springin.org/ ）
+- 効果音: 回復魔法1 by 効果音ラボ（https://soundeffect-lab.info/)
 
 ### 参考にしたもの
 
