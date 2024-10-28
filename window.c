@@ -120,9 +120,6 @@ static void DrawWindow(void) {
     SDL_SetRenderDrawColor(game.renderer, 0, 0, 0, 255);
     SDL_RenderFillRect(game.renderer, &SCREEN_RECT);
 
-    SDL_SetRenderDrawColor(game.renderer, 100, 100, 100, 50);          //      デッドエンド
-    SDL_RenderDrawLine(game.renderer, SCREEN_X, DEAD_ENDLINE, SCREEN_X + SCREEN_W, DEAD_ENDLINE);
-
     dst = NEXT_MINO_RECT;                                           //      ネクスト欄
     dst.x -= 4;
     dst.y -= 4;
@@ -317,6 +314,8 @@ void DestructAnimation(int x, int y, Color c) {
         DrawMino();
         SDL_RenderPresent(game.renderer);
         SDL_Delay(15);
+
+        //  なぜか白い砂がわずかに残るのでもう一度消す
         for (int y = 0; y < SCN_HEI_NSAND; y++) {
             if (game.screen[y][x] == White) {
                 game.screen[y][x] = Black;
