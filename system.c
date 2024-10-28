@@ -156,6 +156,7 @@ static int InputEvent(void) {
     SDL_Event ev;
     if ( SDL_PollEvent(&ev) ) {
 
+        MINO lastmino = mino;
         if ( ev.type == SDL_KEYDOWN ) {
             switch ( ev.key.keysym.sym ) {
             case SDLK_ESCAPE:
@@ -163,9 +164,15 @@ static int InputEvent(void) {
                 break;
             case SDLK_c:
                 RotateMino(0);
+                if (IntersectMino()) {
+                    mino = lastmino;
+                }
                 break;
             case SDLK_UP:
                 RotateMino(1);
+                if (IntersectMino()) {
+                    mino = lastmino;
+                }
                 break;
             case SDLK_DOWN:
                 input.down = 1;
