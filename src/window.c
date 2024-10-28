@@ -7,9 +7,9 @@
 #include <SDL2/SDL_mixer.h>
 #include "header.h"
 
-#define IMAGE_PATH  "Images/game_sheet.png"
-#define MUSIC_PATH  "Musics/UrbanBGM_01.mp3"
-#define CHUNK_PATH  "Musics/Clear2.mp3"
+#define IMAGE_PATH  "../Images/game_sheet.png"
+#define MUSIC_PATH  "../Musics/UrbanBGM_01.mp3"
+#define CHUNK_PATH  "../Musics/Clear2.mp3"
 
 /* global values */
 static SDL_Texture *game_sheet;
