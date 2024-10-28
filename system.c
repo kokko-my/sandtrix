@@ -136,6 +136,7 @@ void GameLogic(void) {
             continue;
         }
         if ( CheckSandComplete(0, i, c) ) {
+            DestructAnimation(0, i, c);
             RemoveCompleteSand(0, i, c);
             game.score += 1000;
             game.lines++;
@@ -402,11 +403,9 @@ static void RemoveCompleteSand(int _x, int _y, int c) {
         }
 
         c = MatchSimilarColor(c);
-        if ( game.screen[y][x] == c || game.screen[y][x] - 1 == c ) {
+        if ( c == MatchSimilarColor(game.screen[y][x]) ) {
             game.screen[y][x] = Black;
-            if ( game.screen[y][x] != c && game.screen[y][x] - 1 != c ) {
-                RemoveCompleteSand(x, y, c);
-            }
+            RemoveCompleteSand(x, y, c);
         }
     }
 }

@@ -115,6 +115,7 @@ extern int  MatchSimilarColor(int);
 extern void InitWindow(void);
 extern void TerminateWindow(void);
 extern void DrawGameScreen(void);
+extern void DestructAnimation(int, int, Color);
 
 
 #endif
